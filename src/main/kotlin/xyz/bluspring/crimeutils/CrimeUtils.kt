@@ -5,6 +5,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings
 import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
@@ -28,6 +29,7 @@ import net.minecraft.world.level.LightLayer
 import net.minecraft.world.level.ServerLevelAccessor
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.BlockBehaviour
+import net.minecraft.world.level.entity.EntityTypeTest
 import org.slf4j.LoggerFactory
 import xyz.bluspring.crimeutils.block.IndestructibleSpawnerBlock
 import xyz.bluspring.crimeutils.block.entity.IndestructibleSpawnerBlockEntity
@@ -82,6 +84,17 @@ class CrimeUtils : ModInitializer {
             it.biome.mobSettings.getMobs(MobCategory.MONSTER).unwrap().any { a -> a.type == EntityType.ZOMBIE }
         }, MobCategory.MONSTER, EntityType.ZOMBIE, spawnWeight, minZombieSpawns, maxZombieSpawns)
 
+        ServerTickEvents.END_WORLD_TICK.register { level ->
+            for (entity in level.getEntities(EntityTypeTest.forClass(Wolf::class.java)) {
+                it.hasCustomName() && it.customName?.string == HOWL_NAME && !it.attributes.hasModifier(
+                    Attributes.MAX_HEALTH,
+                    HOWL_HEALTH_UUID
+                )
+            }) {
+                applyHowlHealth(entity)
+            }
+        }
+
         EntityTrackingEvents.START_TRACKING.register { entity, player ->
             if (entity !is Wolf)
                 return@register
@@ -93,19 +106,25 @@ class CrimeUtils : ModInitializer {
                 return@register
 
             if (!entity.attributes.hasModifier(Attributes.MAX_HEALTH, HOWL_HEALTH_UUID)) {
-                logger.info("Detected a Howl dog without any health modifiers, applying health modifier.")
-                entity.getAttribute(Attributes.MAX_HEALTH)?.addPermanentModifier(
-                    AttributeModifier(HOWL_HEALTH_UUID,
-                        "HowlHealthModifier", 10_000.0, AttributeModifier.Operation.ADDITION
-                    )
-                )
+                applyHowlHealth(entity)
             }
         }
+    }
+
+    fun applyHowlHealth(entity: Wolf) {
+        logger.info("Detected a Howl dog without any health modifiers, applying health modifier.")
+        entity.getAttribute(Attributes.MAX_HEALTH)?.addPermanentModifier(
+            AttributeModifier(HOWL_HEALTH_UUID,
+                "HowlHealthModifier", HOWL_HEALTH, AttributeModifier.Operation.ADDITION
+            )
+        )
+        entity.health = entity.maxHealth
     }
 
     companion object {
         const val MOD_ID = "crimecraft"
         const val HOWL_NAME = "\uE43F7 Howl"
+        const val HOWL_HEALTH = 10_000.0
 
         @JvmField
         val INDESTRUCTIBLE_SPAWNER = Registry.register(Registry.BLOCK,
