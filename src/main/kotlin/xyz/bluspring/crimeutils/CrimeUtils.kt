@@ -143,7 +143,7 @@ class CrimeUtils : ModInitializer {
         const val MOD_ID = "crimecraft"
         const val HOWL_NAME = "\uE43F7 Howl"
 
-        const val HOWL_HEALTH = 10_000.0
+        const val HOWL_HEALTH = 1024.0
         const val HOWL_DAMAGE = 4.56
         const val HOWL_ARMOR = 25.6
 
