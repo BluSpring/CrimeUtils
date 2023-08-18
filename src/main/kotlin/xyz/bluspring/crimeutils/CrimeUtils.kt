@@ -39,6 +39,8 @@ import java.util.*
 class CrimeUtils : ModInitializer {
     private val logger = LoggerFactory.getLogger("CrimeUtils")
     val HOWL_HEALTH_UUID = UUID.fromString("db6c76a4-3c25-4d85-afa2-4cef30539772")
+    val HOWL_STRENGTH_UUID = UUID.fromString("3ee527dc-e43a-4ee8-beef-8e2611c429b2")
+    val HOWL_TOUGHNESS_UUID = UUID.fromString("06e9e214-8906-402d-ac25-0f647f293d90")
 
     var minZombieSpawns = 15
     var maxZombieSpawns = 35
@@ -113,18 +115,37 @@ class CrimeUtils : ModInitializer {
 
     fun applyHowlHealth(entity: Wolf) {
         logger.info("Detected a Howl dog without any health modifiers, applying health modifier.")
+
         entity.getAttribute(Attributes.MAX_HEALTH)?.addPermanentModifier(
             AttributeModifier(HOWL_HEALTH_UUID,
                 "HowlHealthModifier", HOWL_HEALTH, AttributeModifier.Operation.ADDITION
             )
         )
+
+        entity.getAttribute(Attributes.ATTACK_DAMAGE)?.addPermanentModifier(
+            AttributeModifier(
+                HOWL_STRENGTH_UUID,
+                "HowlStrengthModifier", HOWL_DAMAGE, AttributeModifier.Operation.ADDITION
+            )
+        )
+
+        entity.getAttribute(Attributes.ARMOR)?.addPermanentModifier(
+            AttributeModifier(
+                HOWL_TOUGHNESS_UUID,
+                "HowlToughnessModifier", HOWL_ARMOR, AttributeModifier.Operation.ADDITION
+            )
+        )
+
         entity.health = entity.maxHealth
     }
 
     companion object {
         const val MOD_ID = "crimecraft"
         const val HOWL_NAME = "\uE43F7 Howl"
+
         const val HOWL_HEALTH = 10_000.0
+        const val HOWL_DAMAGE = 4.56
+        const val HOWL_ARMOR = 25.6
 
         @JvmField
         val INDESTRUCTIBLE_SPAWNER = Registry.register(Registry.BLOCK,
