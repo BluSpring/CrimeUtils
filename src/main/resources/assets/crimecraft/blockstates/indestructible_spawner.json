@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "crimecraft:block/indestructible_spawner" }
+  }
+}

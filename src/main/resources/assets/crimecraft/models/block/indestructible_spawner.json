@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/spawner",
+  "textures": {
+    "all": "crimecraft:block/indestructible_spawner"
+  }
+}
