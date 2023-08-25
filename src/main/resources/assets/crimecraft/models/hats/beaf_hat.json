@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "crimecraft:hats/beaf_hat",
-		"particle": "crimecraft:hats/beaf_hat"
+		"0": "simplehats:item/hats/beaf_hat",
+		"particle": "simplehats:item/hats/beaf_hat"
 	},
 	"elements": [
 		{
