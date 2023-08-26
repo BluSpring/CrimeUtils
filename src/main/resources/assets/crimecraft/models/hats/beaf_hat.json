@@ -1,6 +1,6 @@
 {
-	"parent": "simplehats:item/hatparent",
 	"credit": "Made with Blockbench",
+	"parent": "simplehats:item/hatparent",
 	"texture_size": [64, 64],
 	"textures": {
 		"0": "crimecraft:hats/beaf_hat",
