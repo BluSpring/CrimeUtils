@@ -3,6 +3,9 @@ package xyz.bluspring.crimeutils
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import fonnymunkey.simplehats.common.init.ModRegistry
+import fonnymunkey.simplehats.common.item.HatItem
+import fonnymunkey.simplehats.util.HatEntry
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
@@ -111,6 +114,8 @@ class CrimeUtils : ModInitializer {
                 applyHowlHealth(entity)
             }
         }
+
+        ModRegistry.hatList.add(BEAF_HAT)
     }
 
     fun applyHowlHealth(entity: Wolf) {
@@ -166,6 +171,15 @@ class CrimeUtils : ModInitializer {
         val INDESTRUCTIBLE_SPAWNER_BLOCK_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE,
             ResourceLocation(MOD_ID, "indestructible_spawner"),
             FabricBlockEntityTypeBuilder.create(::IndestructibleSpawnerBlockEntity, INDESTRUCTIBLE_SPAWNER).build()
+        )
+
+        @JvmField
+        val BEAF_HAT_ENTRY = HatEntry("beaf_hat")
+
+        @JvmField
+        val BEAF_HAT = Registry.register(Registry.ITEM,
+            ResourceLocation(MOD_ID, "beaf_hat"),
+            HatItem(BEAF_HAT_ENTRY)
         )
 
         fun isDarkEnoughToSpawn(
