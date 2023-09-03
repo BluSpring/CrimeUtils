@@ -18,10 +18,9 @@ import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.RandomSource
 import net.minecraft.world.Difficulty
-import net.minecraft.world.entity.EntityType
-import net.minecraft.world.entity.Mob
-import net.minecraft.world.entity.MobCategory
-import net.minecraft.world.entity.MobSpawnType
+import net.minecraft.world.effect.MobEffectInstance
+import net.minecraft.world.effect.MobEffects
+import net.minecraft.world.entity.*
 import net.minecraft.world.entity.ai.attributes.AttributeModifier
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.animal.Wolf
@@ -36,6 +35,7 @@ import net.minecraft.world.level.entity.EntityTypeTest
 import org.slf4j.LoggerFactory
 import xyz.bluspring.crimeutils.block.IndestructibleSpawnerBlock
 import xyz.bluspring.crimeutils.block.entity.IndestructibleSpawnerBlockEntity
+import xyz.bluspring.crimeutils.extensions.HowlEntity
 import java.io.File
 import java.util.*
 
@@ -44,6 +44,19 @@ class CrimeUtils : ModInitializer {
     val HOWL_HEALTH_UUID = UUID.fromString("db6c76a4-3c25-4d85-afa2-4cef30539772")
     val HOWL_STRENGTH_UUID = UUID.fromString("3ee527dc-e43a-4ee8-beef-8e2611c429b2")
     val HOWL_TOUGHNESS_UUID = UUID.fromString("06e9e214-8906-402d-ac25-0f647f293d90")
+    val HOWL_SPEED_UUID = UUID.fromString("e5f79ef7-2f03-42fa-bacc-5577f7afb3ad")
+
+    val HOWL_HEALTH_MODIFIER = AttributeModifier(HOWL_HEALTH_UUID,
+        "HowlHealthModifier", HOWL_HEALTH, AttributeModifier.Operation.ADDITION
+    )
+    val HOWL_STRENGTH_MODIFIER = AttributeModifier(
+        HOWL_STRENGTH_UUID,
+        "HowlStrengthModifier", HOWL_DAMAGE, AttributeModifier.Operation.ADDITION
+    )
+    val HOWL_TOUGHNESS_MODIFIER = AttributeModifier(
+        HOWL_TOUGHNESS_UUID,
+        "HowlToughnessModifier", HOWL_ARMOR, AttributeModifier.Operation.ADDITION
+    )
 
     var minZombieSpawns = 15
     var maxZombieSpawns = 35
@@ -91,12 +104,12 @@ class CrimeUtils : ModInitializer {
 
         ServerTickEvents.END_WORLD_TICK.register { level ->
             for (entity in level.getEntities(EntityTypeTest.forClass(Wolf::class.java)) {
-                it.hasCustomName() && it.customName?.string == HOWL_NAME && !it.attributes.hasModifier(
-                    Attributes.MAX_HEALTH,
-                    HOWL_HEALTH_UUID
-                )
+                isHowl(it)
             }) {
-                applyHowlHealth(entity)
+                if (!isHowlMatchingVersion(entity))
+                    applyHowlHealth(entity)
+
+                applyHowlEffects(entity)
             }
         }
 
@@ -104,15 +117,8 @@ class CrimeUtils : ModInitializer {
             if (entity !is Wolf)
                 return@register
 
-            if (!entity.hasCustomName())
-                return@register
-
-            if (entity.customName?.string != HOWL_NAME)
-                return@register
-
-            if (!entity.attributes.hasModifier(Attributes.MAX_HEALTH, HOWL_HEALTH_UUID)) {
+            if (!isHowlMatchingVersion(entity))
                 applyHowlHealth(entity)
-            }
         }
 
         ModRegistry.hatList.add(BEAF_HAT)
@@ -121,32 +127,28 @@ class CrimeUtils : ModInitializer {
     fun applyHowlHealth(entity: Wolf) {
         logger.info("Detected a Howl dog without any health modifiers, applying health modifier.")
 
-        entity.getAttribute(Attributes.MAX_HEALTH)?.addPermanentModifier(
-            AttributeModifier(HOWL_HEALTH_UUID,
-                "HowlHealthModifier", HOWL_HEALTH, AttributeModifier.Operation.ADDITION
-            )
-        )
+        entity.getAttribute(Attributes.MAX_HEALTH)?.removeModifier(HOWL_HEALTH_UUID)
+        entity.getAttribute(Attributes.ATTACK_DAMAGE)?.removeModifier(HOWL_STRENGTH_UUID)
+        entity.getAttribute(Attributes.ARMOR)?.removeModifier(HOWL_TOUGHNESS_UUID)
 
-        entity.getAttribute(Attributes.ATTACK_DAMAGE)?.addPermanentModifier(
-            AttributeModifier(
-                HOWL_STRENGTH_UUID,
-                "HowlStrengthModifier", HOWL_DAMAGE, AttributeModifier.Operation.ADDITION
-            )
-        )
-
-        entity.getAttribute(Attributes.ARMOR)?.addPermanentModifier(
-            AttributeModifier(
-                HOWL_TOUGHNESS_UUID,
-                "HowlToughnessModifier", HOWL_ARMOR, AttributeModifier.Operation.ADDITION
-            )
-        )
+        entity.getAttribute(Attributes.MAX_HEALTH)?.addPermanentModifier(HOWL_HEALTH_MODIFIER)
+        entity.getAttribute(Attributes.ATTACK_DAMAGE)?.addPermanentModifier(HOWL_STRENGTH_MODIFIER)
+        entity.getAttribute(Attributes.ARMOR)?.addPermanentModifier(HOWL_TOUGHNESS_MODIFIER)
 
         entity.health = entity.maxHealth
+
+        if (entity is HowlEntity)
+            entity.ccUpdateVersion()
+    }
+
+    fun applyHowlEffects(entity: Wolf) {
+        entity.forceAddEffect(MobEffectInstance(MobEffects.REGENERATION, 1_000_000_000, 255, false, false), null)
     }
 
     companion object {
         const val MOD_ID = "crimecraft"
         const val HOWL_NAME = "\uE43F7 Howl"
+        const val HOWL_VERSION = 1
 
         const val HOWL_HEALTH = 1024.0
         const val HOWL_DAMAGE = 4.56
@@ -174,13 +176,23 @@ class CrimeUtils : ModInitializer {
         )
 
         @JvmField
-        val BEAF_HAT_ENTRY = HatEntry("beaf_hat")
+        val BEAF_HAT_ENTRY = HatEntry("beaf_hat", Rarity.COMMON, 5)
 
         @JvmField
         val BEAF_HAT = Registry.register(Registry.ITEM,
             ResourceLocation(MOD_ID, "beaf_hat"),
             HatItem(BEAF_HAT_ENTRY)
         )
+
+        @JvmStatic
+        fun isHowl(entity: LivingEntity): Boolean {
+            return entity is Wolf && entity.hasCustomName() && entity.customName?.string == HOWL_NAME
+        }
+
+        @JvmStatic
+        fun isHowlMatchingVersion(entity: LivingEntity): Boolean {
+            return isHowl(entity) && entity is HowlEntity && entity.ccVersion == HOWL_VERSION
+        }
 
         fun isDarkEnoughToSpawn(
             world: ServerLevelAccessor,

@@ -7,7 +7,8 @@
     "MonsterMixin",
     "NameTagItemMixin",
     "SpawnEggItemMixin",
-    "SpawnPlacementsMixin"
+    "SpawnPlacementsMixin",
+    "TamableAnimalMixin"
   ],
   "client": [
   ],
