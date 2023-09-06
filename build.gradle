@@ -32,6 +32,12 @@ repositories {
         name = "Ladysnake Libs"
         url = 'https://maven.ladysnake.org/releases'
     }
+    maven {
+        url = "https://jitpack.io"
+    }
+    maven {
+        url "https://maven.minecraftforge.net/"
+    }
 }
 
 dependencies {
@@ -49,6 +55,8 @@ dependencies {
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:8.3.103") {
         exclude(group: "net.fabricmc.fabric-api")
     }
+
+    include(modImplementation("com.github.KiltMC:EnumExtension:40781d9182"))
 
     modRuntimeOnly ("maven.modrinth:ferrite-core:5.0.3-fabric")
     modRuntimeOnly ("maven.modrinth:lazydfu:0.1.3")

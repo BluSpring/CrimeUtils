@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory
 import xyz.bluspring.crimeutils.block.IndestructibleSpawnerBlock
 import xyz.bluspring.crimeutils.block.entity.IndestructibleSpawnerBlockEntity
 import xyz.bluspring.crimeutils.extensions.HowlEntity
+import xyz.bluspring.enumextension.extensions.MobCategoryExtension
 import java.io.File
 import java.util.*
 
@@ -58,49 +59,12 @@ class CrimeUtils : ModInitializer {
         "HowlToughnessModifier", HOWL_ARMOR, AttributeModifier.Operation.ADDITION
     )
 
-    var minZombieSpawns = 15
-    var maxZombieSpawns = 35
-    var spawnWeight = 137
-
-    val gson = GsonBuilder().setPrettyPrinting().create()
-    val configFile = File(FabricLoader.getInstance().configDir.toFile(), "crimeutils.json")
-
-    fun loadConfig() {
-        if (!configFile.exists()) {
-            saveConfig()
-            return
-        }
-
-        val json = JsonParser.parseString(configFile.readText()).asJsonObject
-
-        if (json.has("min_zombie_spawns"))
-            minZombieSpawns = json.get("min_zombie_spawns").asInt
-
-        if (json.has("max_zombie_spawns"))
-            maxZombieSpawns = json.get("max_zombie_spawns").asInt
-
-        if (json.has("spawn_weight"))
-            spawnWeight = json.get("spawn_weight").asInt
-    }
-
-    fun saveConfig() {
-        if (!configFile.exists())
-            configFile.createNewFile()
-
-        val json = JsonObject()
-        json.addProperty("min_zombie_spawns", minZombieSpawns)
-        json.addProperty("max_zombie_spawns", maxZombieSpawns)
-        json.addProperty("spawn_weight", spawnWeight)
-
-        configFile.writeText(gson.toJson(json))
-    }
+    val trackedZombieIds = mutableListOf<UUID>()
 
     override fun onInitialize() {
-        loadConfig()
-
         BiomeModifications.addSpawn({
             it.biome.mobSettings.getMobs(MobCategory.MONSTER).unwrap().any { a -> a.type == EntityType.ZOMBIE }
-        }, MobCategory.MONSTER, EntityType.ZOMBIE, spawnWeight, minZombieSpawns, maxZombieSpawns)
+        }, ZOMBIE_CATEGORY, EntityType.ZOMBIE, spawnWeight, minZombieSpawns, maxZombieSpawns)
 
         ServerTickEvents.END_WORLD_TICK.register { level ->
             for (entity in level.getEntities(EntityTypeTest.forClass(Wolf::class.java)) {
@@ -114,12 +78,36 @@ class CrimeUtils : ModInitializer {
         }
 
         EntityTrackingEvents.START_TRACKING.register { entity, player ->
+            /*if (entity is Zombie) {
+                if (!trackedZombieIds.contains(entity.uuid))
+                    trackedZombieIds.add(entity.uuid)
+            }*/
+
             if (entity !is Wolf)
                 return@register
 
-            if (!isHowlMatchingVersion(entity))
+            // i screwed up... oops.
+            // let's fix that.
+            if (!isHowl(entity) && entity is HowlEntity && (entity.ccVersion != -1 || entity.attributes.hasModifier(Attributes.MAX_HEALTH, HOWL_HEALTH_UUID))) {
+                logger.info("Blu fucked up, there accidentally exists a broken Howl. We're rectifying that.")
+
+                entity.getAttribute(Attributes.MAX_HEALTH)?.removeModifier(HOWL_HEALTH_UUID)
+                entity.getAttribute(Attributes.ATTACK_DAMAGE)?.removeModifier(HOWL_STRENGTH_UUID)
+                entity.getAttribute(Attributes.ARMOR)?.removeModifier(HOWL_TOUGHNESS_UUID)
+                entity.removeAllEffects()
+
+                return@register
+            }
+
+            if (isHowl(entity) && !isHowlMatchingVersion(entity))
                 applyHowlHealth(entity)
         }
+
+        /*ServerLivingEntityEvents.AFTER_DEATH.register { entity, _ ->
+            if (entity is Zombie) {
+                trackedZombieIds.remove(entity.uuid)
+            }
+        }*/
 
         ModRegistry.hatList.add(BEAF_HAT)
     }
@@ -153,6 +141,60 @@ class CrimeUtils : ModInitializer {
         const val HOWL_HEALTH = 1024.0
         const val HOWL_DAMAGE = 4.56
         const val HOWL_ARMOR = 25.6
+
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        val configFile = File(FabricLoader.getInstance().configDir.toFile(), "crimeutils.json")
+
+        fun loadConfig() {
+            if (!configFile.exists()) {
+                saveConfig()
+                return
+            }
+
+            val json = JsonParser.parseString(configFile.readText()).asJsonObject
+
+            if (json.has("min_zombie_spawns"))
+                minZombieSpawns = json.get("min_zombie_spawns").asInt
+
+            if (json.has("max_zombie_spawns"))
+                maxZombieSpawns = json.get("max_zombie_spawns").asInt
+
+            if (json.has("spawn_weight"))
+                spawnWeight = json.get("spawn_weight").asInt
+
+            if (json.has("max_zombies_per_chunk"))
+                maxZombiesPerChunk = json.get("max_zombies_per_chunk").asInt
+
+            saveConfig()
+        }
+
+        fun saveConfig() {
+            if (!configFile.exists())
+                configFile.createNewFile()
+
+            val json = JsonObject()
+            json.addProperty("min_zombie_spawns", minZombieSpawns)
+            json.addProperty("max_zombie_spawns", maxZombieSpawns)
+            json.addProperty("spawn_weight", spawnWeight)
+            json.addProperty("max_zombies_per_chunk", maxZombiesPerChunk)
+
+            configFile.writeText(gson.toJson(json))
+        }
+
+        var minZombieSpawns = 15
+        var maxZombieSpawns = 35
+        var spawnWeight = 137
+        var maxZombiesPerChunk = 75
+
+        @JvmStatic
+        @get:JvmName("getZombieCategory")
+        val ZOMBIE_CATEGORY: MobCategory
+
+        init {
+            loadConfig()
+
+            ZOMBIE_CATEGORY = MobCategoryExtension.create("CC_ZOMBIES", "cc_zombies", maxZombiesPerChunk, false, false, 128);
+        }
 
         @JvmField
         val INDESTRUCTIBLE_SPAWNER = Registry.register(Registry.BLOCK,

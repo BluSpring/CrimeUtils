@@ -4,6 +4,7 @@
   "package": "xyz.bluspring.crimeutils.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "EntityTypeMixin",
     "MonsterMixin",
     "NameTagItemMixin",
     "SpawnEggItemMixin",
