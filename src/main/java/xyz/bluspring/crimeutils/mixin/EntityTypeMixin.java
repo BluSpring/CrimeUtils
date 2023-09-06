@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import xyz.bluspring.crimeutils.CrimeUtils;
+import xyz.bluspring.crimeutils.CrimeUtilsConfig;
 
 @Mixin(EntityType.class)
 public class EntityTypeMixin {
@@ -19,7 +19,7 @@ public class EntityTypeMixin {
                     (EntityType<T>) Registry.register(Registry.ENTITY_TYPE, string,
                             EntityType.Builder.of(
                                     (type, level) -> new Zombie((EntityType) type, level),
-                                            CrimeUtils.getZombieCategory()
+                                    CrimeUtilsConfig.getZombieCategory()
                             )
                                     .sized(0.6F, 1.95F)
                                     .clientTrackingRange(8)
