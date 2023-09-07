@@ -14,7 +14,8 @@ public class MonsterMixin {
     @Inject(method = "getWalkTargetValue", at = @At("RETURN"), cancellable = true)
     public void doNotAffectByDay(BlockPos blockPos, LevelReader levelReader, CallbackInfoReturnable<Float> cir) {
         if (((Monster) (Object) this) instanceof Zombie) {
-            cir.setReturnValue(1f);
+            if ((Math.random() * 15) == 0)
+                cir.setReturnValue(1f);
         }
     }
 }
