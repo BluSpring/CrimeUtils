@@ -32,6 +32,9 @@ object CrimeUtilsConfig {
         if (json.has("max_zombies_per_chunk"))
             maxZombiesPerChunk = json.get("max_zombies_per_chunk").asInt
 
+        if (json.has("animal_spawn_weight_multiplier"))
+            animalSpawnWeightMultiplier = json.get("animal_spawn_weight_multiplier").asDouble
+
         saveConfig()
     }
 
@@ -44,6 +47,7 @@ object CrimeUtilsConfig {
         json.addProperty("max_zombie_spawns", maxZombieSpawns)
         json.addProperty("spawn_weight", spawnWeight)
         json.addProperty("max_zombies_per_chunk", maxZombiesPerChunk)
+        json.addProperty("animal_spawn_weight_multiplier", animalSpawnWeightMultiplier)
 
         configFile.writeText(gson.toJson(json))
     }
@@ -52,6 +56,7 @@ object CrimeUtilsConfig {
     var maxZombieSpawns = 35
     var spawnWeight = 137
     var maxZombiesPerChunk = 75
+    var animalSpawnWeightMultiplier = 9.5
 
     @JvmStatic
     @get:JvmName("getZombieCategory")

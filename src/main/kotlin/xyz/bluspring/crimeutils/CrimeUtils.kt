@@ -5,6 +5,7 @@ import fonnymunkey.simplehats.common.item.HatItem
 import fonnymunkey.simplehats.util.HatEntry
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications
+import net.fabricmc.fabric.api.biome.v1.ModificationPhase
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings
 import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents
@@ -25,6 +26,7 @@ import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Rarity
 import net.minecraft.world.level.LightLayer
 import net.minecraft.world.level.ServerLevelAccessor
+import net.minecraft.world.level.biome.MobSpawnSettings.SpawnerData
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.entity.EntityTypeTest
@@ -32,6 +34,7 @@ import org.slf4j.LoggerFactory
 import xyz.bluspring.crimeutils.block.IndestructibleSpawnerBlock
 import xyz.bluspring.crimeutils.block.entity.IndestructibleSpawnerBlockEntity
 import xyz.bluspring.crimeutils.extensions.HowlEntity
+import xyz.bluspring.crimeutils.mixin.BiomeModificationContextImplAccessor
 import java.util.*
 
 class CrimeUtils : ModInitializer {
@@ -53,12 +56,29 @@ class CrimeUtils : ModInitializer {
         "HowlToughnessModifier", HOWL_ARMOR, AttributeModifier.Operation.ADDITION
     )
 
-    val trackedZombieIds = mutableListOf<UUID>()
-
     override fun onInitialize() {
         BiomeModifications.addSpawn({
             it.biome.mobSettings.getMobs(MobCategory.MONSTER).unwrap().any { a -> a.type == EntityType.ZOMBIE }
         }, CrimeUtilsConfig.ZOMBIE_CATEGORY, EntityType.ZOMBIE, CrimeUtilsConfig.spawnWeight, CrimeUtilsConfig.minZombieSpawns, CrimeUtilsConfig.maxZombieSpawns)
+
+        // Increase animal spawn weights to force them to have a higher spawn priority
+        if (false)
+        BiomeModifications.create(ResourceLocation("crimecraft", "increased_animal_spawns")).add(ModificationPhase.ADDITIONS, { b ->
+            !b.biome.mobSettings.getMobs(MobCategory.CREATURE).isEmpty
+        }) { ctx ->
+            val biome = (ctx as BiomeModificationContextImplAccessor).biome
+            val originalSettings = biome.mobSettings.getMobs(MobCategory.CREATURE).unwrap()
+
+            for (settings in originalSettings) {
+                val weight = (settings.weight.asInt() * CrimeUtilsConfig.animalSpawnWeightMultiplier).toInt()
+                val minGroupSize = settings.minCount
+                val maxGroupSize = settings.maxCount
+
+                ctx.spawnSettings.removeSpawnsOfEntityType(settings.type)
+                ctx.spawnSettings
+                    .addSpawn(MobCategory.CREATURE, SpawnerData(settings.type, weight, minGroupSize, maxGroupSize))
+            }
+        }
 
         ServerTickEvents.END_WORLD_TICK.register { level ->
             for (entity in level.getEntities(EntityTypeTest.forClass(Wolf::class.java)) {

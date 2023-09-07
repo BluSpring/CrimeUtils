@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MobCategoryMixin {
     @Inject(method = "getMaxInstancesPerChunk", at = @At("HEAD"), cancellable = true)
     private void cc$useCustomMaxAnimalSpawn(CallbackInfoReturnable<Integer> cir) {
-        if ((Object) this == MobCategory.CREATURE) {
-            cir.setReturnValue(35);
+        if ((Object) this == MobCategory.CREATURE && false) {
+            cir.setReturnValue(75);
         }
     }
 }

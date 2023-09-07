@@ -15,7 +15,7 @@ public class NaturalSpawnerMixin {
     @Inject(method = "spawnForChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;pop()V"))
     private static void spawnForChunk(ServerLevel serverLevel, LevelChunk levelChunk, NaturalSpawner.SpawnState spawnState, boolean spawnCreatures, boolean spawnMonsters, boolean creatureCooldown, CallbackInfo callback) {
         // remove 400 tick delay for spawning animals
-        if (!creatureCooldown && spawnCreatures) {
+        if (!creatureCooldown && spawnCreatures && false) {
             if (((SpawnStateAccessor) spawnState).callCanSpawnForCategory(MobCategory.CREATURE, levelChunk.getPos())) {
                 spawnCategoryForChunk(MobCategory.CREATURE, serverLevel, levelChunk, (entityType, blockPos, chunkAccess) -> ((SpawnStateAccessor) spawnState).callCanSpawn(entityType, blockPos, chunkAccess), (mob, chunkAccess1) -> ((SpawnStateAccessor) spawnState).callAfterSpawn(mob, chunkAccess1));
             }
