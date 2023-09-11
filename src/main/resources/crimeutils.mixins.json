@@ -4,11 +4,13 @@
   "package": "xyz.bluspring.crimeutils.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "AnimalMixin",
     "BiomeModificationContextImplAccessor",
     "EntityTypeMixin",
     "MobCategoryMixin",
     "MonsterMixin",
     "NameTagItemMixin",
+    "NaturalSpawnerAccessor",
     "NaturalSpawnerMixin",
     "SpawnEggItemMixin",
     "SpawnPlacementsMixin",

@@ -62,22 +62,27 @@ class CrimeUtils : ModInitializer {
         }, CrimeUtilsConfig.ZOMBIE_CATEGORY, EntityType.ZOMBIE, CrimeUtilsConfig.spawnWeight, CrimeUtilsConfig.minZombieSpawns, CrimeUtilsConfig.maxZombieSpawns)
 
         // Increase animal spawn weights to force them to have a higher spawn priority
-        if (false)
-        BiomeModifications.create(ResourceLocation("crimecraft", "increased_animal_spawns")).add(ModificationPhase.ADDITIONS, { b ->
-            !b.biome.mobSettings.getMobs(MobCategory.CREATURE).isEmpty
-        }) { ctx ->
-            val biome = (ctx as BiomeModificationContextImplAccessor).biome
-            val originalSettings = biome.mobSettings.getMobs(MobCategory.CREATURE).unwrap()
+        if (false) {
+            BiomeModifications.create(ResourceLocation("crimecraft", "increased_animal_spawns"))
+                .add(ModificationPhase.ADDITIONS, { b ->
+                    !b.biome.mobSettings.getMobs(MobCategory.CREATURE).isEmpty
+                }) { ctx ->
+                    val biome = (ctx as BiomeModificationContextImplAccessor).biome
+                    val originalSettings = biome.mobSettings.getMobs(MobCategory.CREATURE).unwrap()
 
-            for (settings in originalSettings) {
-                val weight = (settings.weight.asInt() * CrimeUtilsConfig.animalSpawnWeightMultiplier).toInt()
-                val minGroupSize = settings.minCount
-                val maxGroupSize = settings.maxCount
+                    for (settings in originalSettings) {
+                        val weight = (settings.weight.asInt() * CrimeUtilsConfig.animalSpawnWeightMultiplier).toInt()
+                        val minGroupSize = settings.minCount
+                        val maxGroupSize = settings.maxCount
 
-                ctx.spawnSettings.removeSpawnsOfEntityType(settings.type)
-                ctx.spawnSettings
-                    .addSpawn(MobCategory.CREATURE, SpawnerData(settings.type, weight, minGroupSize, maxGroupSize))
-            }
+                        ctx.spawnSettings.removeSpawnsOfEntityType(settings.type)
+                        ctx.spawnSettings
+                            .addSpawn(
+                                MobCategory.CREATURE,
+                                SpawnerData(settings.type, weight, minGroupSize, maxGroupSize)
+                            )
+                    }
+                }
         }
 
         ServerTickEvents.END_WORLD_TICK.register { level ->

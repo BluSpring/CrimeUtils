@@ -20,6 +20,9 @@
     ],
     "client": [
       "xyz.bluspring.crimeutils.client.CrimeUtilsClient"
+    ],
+    "cardinal-components": [
+      "xyz.bluspring.crimeutils.worldgen.SpawnerComponents"
     ]
   },
   "mixins": [
@@ -32,5 +35,12 @@
     "fabric-language-kotlin": "*",
     "simplehats": ">=0.1.6",
     "trinkets": ">=3.4.1"
+  },
+  "custom": {
+    "cardinal-components": [
+      "crimecraft:last_spawn",
+      "crimecraft:entity_count",
+      "crimecraft:reset_at"
+    ]
   }
 }

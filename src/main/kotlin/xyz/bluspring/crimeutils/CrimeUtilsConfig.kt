@@ -35,6 +35,9 @@ object CrimeUtilsConfig {
         if (json.has("animal_spawn_weight_multiplier"))
             animalSpawnWeightMultiplier = json.get("animal_spawn_weight_multiplier").asDouble
 
+        if (json.has("use_alternative_spawning"))
+            useAlternativeSpawning = json.get("use_alternative_spawning").asBoolean
+
         saveConfig()
     }
 
@@ -48,6 +51,7 @@ object CrimeUtilsConfig {
         json.addProperty("spawn_weight", spawnWeight)
         json.addProperty("max_zombies_per_chunk", maxZombiesPerChunk)
         json.addProperty("animal_spawn_weight_multiplier", animalSpawnWeightMultiplier)
+        json.addProperty("use_alternative_spawning", useAlternativeSpawning)
 
         configFile.writeText(gson.toJson(json))
     }
@@ -57,6 +61,7 @@ object CrimeUtilsConfig {
     var spawnWeight = 137
     var maxZombiesPerChunk = 75
     var animalSpawnWeightMultiplier = 9.5
+    var useAlternativeSpawning = false
 
     @JvmStatic
     @get:JvmName("getZombieCategory")

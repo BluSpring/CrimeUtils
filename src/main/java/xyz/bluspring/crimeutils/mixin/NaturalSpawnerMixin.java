@@ -9,16 +9,15 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import xyz.bluspring.crimeutils.CrimeUtilsConfig;
+import xyz.bluspring.crimeutils.worldgen.CustomCreatureSpawner;
 
 @Mixin(NaturalSpawner.class)
 public class NaturalSpawnerMixin {
-    @Inject(method = "spawnForChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;pop()V"))
-    private static void spawnForChunk(ServerLevel serverLevel, LevelChunk levelChunk, NaturalSpawner.SpawnState spawnState, boolean spawnCreatures, boolean spawnMonsters, boolean creatureCooldown, CallbackInfo callback) {
-        // remove 400 tick delay for spawning animals
-        if (!creatureCooldown && spawnCreatures && false) {
-            if (((SpawnStateAccessor) spawnState).callCanSpawnForCategory(MobCategory.CREATURE, levelChunk.getPos())) {
-                spawnCategoryForChunk(MobCategory.CREATURE, serverLevel, levelChunk, (entityType, blockPos, chunkAccess) -> ((SpawnStateAccessor) spawnState).callCanSpawn(entityType, blockPos, chunkAccess), (mob, chunkAccess1) -> ((SpawnStateAccessor) spawnState).callAfterSpawn(mob, chunkAccess1));
-            }
+    @Inject(method = "spawnForChunk", at = @At("HEAD"))
+    private static void cc$useAlternativeSpawningForAnimals(ServerLevel serverLevel, LevelChunk levelChunk, NaturalSpawner.SpawnState spawnState, boolean bl, boolean bl2, boolean bl3, CallbackInfo ci) {
+        if (CrimeUtilsConfig.INSTANCE.getUseAlternativeSpawning()) {
+            CustomCreatureSpawner.INSTANCE.checkSpawningCapability(serverLevel, levelChunk);
         }
     }
 
