@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.bluspring.crimeutils.CrimeUtils;
+import xyz.bluspring.crimeutils.CrimeUtilsConfig;
 import xyz.bluspring.crimeutils.extensions.HowlEntity;
 
 @Mixin(TamableAnimal.class)
@@ -26,7 +27,10 @@ public abstract class TamableAnimalMixin extends Animal implements HowlEntity {
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     public void appendHowlSaveData(CompoundTag compoundTag, CallbackInfo ci) {
         if (CrimeUtils.isHowl((TamableAnimal) (Object) this)) {
-            compoundTag.putInt("CCHowlVersion", CrimeUtils.HOWL_VERSION);
+            compoundTag.putInt("CCHowlVersion", CrimeUtilsConfig.INSTANCE.getCurrentHowlVersion());
+        } else {
+            // just in case
+            compoundTag.remove("CCHowlVersion");
         }
     }
 
@@ -49,6 +53,6 @@ public abstract class TamableAnimalMixin extends Animal implements HowlEntity {
 
     @Override
     public void ccUpdateVersion() {
-        version = CrimeUtils.HOWL_VERSION;
+        version = CrimeUtilsConfig.INSTANCE.getCurrentHowlVersion();
     }
 }

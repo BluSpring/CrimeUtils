@@ -38,6 +38,18 @@ object CrimeUtilsConfig {
         if (json.has("use_alternative_spawning"))
             useAlternativeSpawning = json.get("use_alternative_spawning").asBoolean
 
+        if (json.has("howl_version"))
+            currentHowlVersion = json.get("howl_version").asInt
+
+        if (json.has("howl_health_add"))
+            howlHealthAddition = json.get("howl_health_add").asDouble
+
+        if (json.has("howl_strength_add"))
+            howlStrengthAddition = json.get("howl_strength_add").asDouble
+
+        if (json.has("howl_armor_add"))
+            howlArmorAddition = json.get("howl_armor_add").asDouble
+
         saveConfig()
     }
 
@@ -53,6 +65,11 @@ object CrimeUtilsConfig {
         json.addProperty("animal_spawn_weight_multiplier", animalSpawnWeightMultiplier)
         json.addProperty("use_alternative_spawning", useAlternativeSpawning)
 
+        json.addProperty("howl_version", currentHowlVersion)
+        json.addProperty("howl_health_add", howlHealthAddition)
+        json.addProperty("howl_strength_add", howlStrengthAddition)
+        json.addProperty("howl_armor_add", howlArmorAddition)
+
         configFile.writeText(gson.toJson(json))
     }
 
@@ -62,6 +79,11 @@ object CrimeUtilsConfig {
     var maxZombiesPerChunk = 75
     var animalSpawnWeightMultiplier = 9.5
     var useAlternativeSpawning = false
+
+    var currentHowlVersion = 2
+    var howlHealthAddition = 1024.0
+    var howlStrengthAddition = 6.96
+    var howlArmorAddition = 25.6
 
     @JvmStatic
     @get:JvmName("getZombieCategory")

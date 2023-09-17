@@ -44,19 +44,23 @@ class CrimeUtils : ModInitializer {
     val HOWL_TOUGHNESS_UUID = UUID.fromString("06e9e214-8906-402d-ac25-0f647f293d90")
     val HOWL_SPEED_UUID = UUID.fromString("e5f79ef7-2f03-42fa-bacc-5577f7afb3ad")
 
-    val HOWL_HEALTH_MODIFIER = AttributeModifier(HOWL_HEALTH_UUID,
-        "HowlHealthModifier", HOWL_HEALTH, AttributeModifier.Operation.ADDITION
-    )
-    val HOWL_STRENGTH_MODIFIER = AttributeModifier(
-        HOWL_STRENGTH_UUID,
-        "HowlStrengthModifier", HOWL_DAMAGE, AttributeModifier.Operation.ADDITION
-    )
-    val HOWL_TOUGHNESS_MODIFIER = AttributeModifier(
-        HOWL_TOUGHNESS_UUID,
-        "HowlToughnessModifier", HOWL_ARMOR, AttributeModifier.Operation.ADDITION
-    )
+    lateinit var HOWL_HEALTH_MODIFIER: AttributeModifier
+    lateinit var HOWL_STRENGTH_MODIFIER: AttributeModifier
+    lateinit var HOWL_TOUGHNESS_MODIFIER: AttributeModifier
 
     override fun onInitialize() {
+        HOWL_HEALTH_MODIFIER = AttributeModifier(HOWL_HEALTH_UUID,
+            "HowlHealthModifier", CrimeUtilsConfig.howlHealthAddition, AttributeModifier.Operation.ADDITION
+        )
+
+        HOWL_STRENGTH_MODIFIER = AttributeModifier(HOWL_STRENGTH_UUID,
+            "HowlStrengthModifier", CrimeUtilsConfig.howlStrengthAddition, AttributeModifier.Operation.ADDITION
+        )
+
+        HOWL_TOUGHNESS_MODIFIER = AttributeModifier(HOWL_TOUGHNESS_UUID,
+            "HowlToughnessModifier", CrimeUtilsConfig.howlArmorAddition, AttributeModifier.Operation.ADDITION
+        )
+
         BiomeModifications.addSpawn({
             it.biome.mobSettings.getMobs(MobCategory.MONSTER).unwrap().any { a -> a.type == EntityType.ZOMBIE }
         }, CrimeUtilsConfig.ZOMBIE_CATEGORY, EntityType.ZOMBIE, CrimeUtilsConfig.spawnWeight, CrimeUtilsConfig.minZombieSpawns, CrimeUtilsConfig.maxZombieSpawns)
@@ -155,11 +159,6 @@ class CrimeUtils : ModInitializer {
     companion object {
         const val MOD_ID = "crimecraft"
         const val HOWL_NAME = "\uE43F7 Howl"
-        const val HOWL_VERSION = 1
-
-        const val HOWL_HEALTH = 1024.0
-        const val HOWL_DAMAGE = 4.56
-        const val HOWL_ARMOR = 25.6
 
         @JvmField
         val INDESTRUCTIBLE_SPAWNER = Registry.register(Registry.BLOCK,
@@ -198,7 +197,7 @@ class CrimeUtils : ModInitializer {
 
         @JvmStatic
         fun isHowlMatchingVersion(entity: LivingEntity): Boolean {
-            return isHowl(entity) && entity is HowlEntity && entity.ccVersion == HOWL_VERSION
+            return isHowl(entity) && entity is HowlEntity && entity.ccVersion == CrimeUtilsConfig.currentHowlVersion
         }
 
         fun isDarkEnoughToSpawn(
