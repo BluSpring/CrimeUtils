@@ -15,7 +15,8 @@
     "SpawnEggItemMixin",
     "SpawnPlacementsMixin",
     "SpawnStateAccessor",
-    "TamableAnimalMixin"
+    "TamableAnimalMixin",
+    "ZombieMixin"
   ],
   "client": [
   ],
