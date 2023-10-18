@@ -50,6 +50,9 @@ object CrimeUtilsConfig {
         if (json.has("howl_armor_add"))
             howlArmorAddition = json.get("howl_armor_add").asDouble
 
+        if (json.has("howl_speed_mult"))
+            howlSpeedMultiplier = json.get("howl_speed_mult").asDouble
+
         saveConfig()
     }
 
@@ -69,6 +72,7 @@ object CrimeUtilsConfig {
         json.addProperty("howl_health_add", howlHealthAddition)
         json.addProperty("howl_strength_add", howlStrengthAddition)
         json.addProperty("howl_armor_add", howlArmorAddition)
+        json.addProperty("howl_speed_mult", howlSpeedMultiplier)
 
         configFile.writeText(gson.toJson(json))
     }
@@ -84,6 +88,7 @@ object CrimeUtilsConfig {
     var howlHealthAddition = 1024.0
     var howlStrengthAddition = 6.96
     var howlArmorAddition = 25.6
+    var howlSpeedMultiplier = 1.1
 
     @JvmStatic
     @get:JvmName("getZombieCategory")

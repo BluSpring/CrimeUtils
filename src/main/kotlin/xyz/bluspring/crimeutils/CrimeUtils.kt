@@ -48,6 +48,7 @@ class CrimeUtils : ModInitializer {
     lateinit var HOWL_HEALTH_MODIFIER: AttributeModifier
     lateinit var HOWL_STRENGTH_MODIFIER: AttributeModifier
     lateinit var HOWL_TOUGHNESS_MODIFIER: AttributeModifier
+    lateinit var HOWL_SPEED_MODIFIER: AttributeModifier
 
     override fun onInitialize() {
         HOWL_HEALTH_MODIFIER = AttributeModifier(HOWL_HEALTH_UUID,
@@ -60,6 +61,10 @@ class CrimeUtils : ModInitializer {
 
         HOWL_TOUGHNESS_MODIFIER = AttributeModifier(HOWL_TOUGHNESS_UUID,
             "HowlToughnessModifier", CrimeUtilsConfig.howlArmorAddition, AttributeModifier.Operation.ADDITION
+        )
+
+        HOWL_SPEED_MODIFIER = AttributeModifier(HOWL_SPEED_UUID,
+            "HowlSpeedModifier", CrimeUtilsConfig.howlSpeedMultiplier, AttributeModifier.Operation.MULTIPLY_TOTAL
         )
 
         BiomeModifications.addSpawn({
@@ -118,6 +123,7 @@ class CrimeUtils : ModInitializer {
                 entity.getAttribute(Attributes.MAX_HEALTH)?.removeModifier(HOWL_HEALTH_UUID)
                 entity.getAttribute(Attributes.ATTACK_DAMAGE)?.removeModifier(HOWL_STRENGTH_UUID)
                 entity.getAttribute(Attributes.ARMOR)?.removeModifier(HOWL_TOUGHNESS_UUID)
+                entity.getAttribute(Attributes.MOVEMENT_SPEED)?.removeModifier(HOWL_SPEED_MODIFIER)
                 entity.removeAllEffects()
 
                 return@register
@@ -142,10 +148,12 @@ class CrimeUtils : ModInitializer {
         entity.getAttribute(Attributes.MAX_HEALTH)?.removeModifier(HOWL_HEALTH_UUID)
         entity.getAttribute(Attributes.ATTACK_DAMAGE)?.removeModifier(HOWL_STRENGTH_UUID)
         entity.getAttribute(Attributes.ARMOR)?.removeModifier(HOWL_TOUGHNESS_UUID)
+        entity.getAttribute(Attributes.MOVEMENT_SPEED)?.removeModifier(HOWL_SPEED_UUID)
 
         entity.getAttribute(Attributes.MAX_HEALTH)?.addPermanentModifier(HOWL_HEALTH_MODIFIER)
         entity.getAttribute(Attributes.ATTACK_DAMAGE)?.addPermanentModifier(HOWL_STRENGTH_MODIFIER)
         entity.getAttribute(Attributes.ARMOR)?.addPermanentModifier(HOWL_TOUGHNESS_MODIFIER)
+        entity.getAttribute(Attributes.MOVEMENT_SPEED)?.addPermanentModifier(HOWL_SPEED_MODIFIER)
 
         entity.health = entity.maxHealth
 
