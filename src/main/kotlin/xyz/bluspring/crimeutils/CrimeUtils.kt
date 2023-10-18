@@ -1,17 +1,27 @@
 package xyz.bluspring.crimeutils
 
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import com.mojang.brigadier.arguments.IntegerArgumentType
 import fonnymunkey.simplehats.common.init.ModRegistry
 import fonnymunkey.simplehats.common.item.HatItem
 import fonnymunkey.simplehats.util.HatEntry
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications
 import net.fabricmc.fabric.api.biome.v1.ModificationPhase
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings
 import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
+import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.commands.Commands
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Registry
+import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.tags.BiomeTags
 import net.minecraft.util.RandomSource
@@ -31,11 +41,14 @@ import net.minecraft.world.level.biome.MobSpawnSettings.SpawnerData
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.entity.EntityTypeTest
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.Vec3
 import org.slf4j.LoggerFactory
 import xyz.bluspring.crimeutils.block.IndestructibleSpawnerBlock
 import xyz.bluspring.crimeutils.block.entity.IndestructibleSpawnerBlockEntity
 import xyz.bluspring.crimeutils.extensions.HowlEntity
 import xyz.bluspring.crimeutils.mixin.BiomeModificationContextImplAccessor
+import java.io.File
 import java.util.*
 
 class CrimeUtils : ModInitializer {
@@ -50,7 +63,13 @@ class CrimeUtils : ModInitializer {
     lateinit var HOWL_TOUGHNESS_MODIFIER: AttributeModifier
     lateinit var HOWL_SPEED_MODIFIER: AttributeModifier
 
+    val protFile = File(FabricLoader.getInstance().configDir.toFile(), "crimeutils_prot.json")
+    val protectedAreas = mutableListOf<AABB>()
+    var isProtectionEnabled = false
+
     override fun onInitialize() {
+        loadProtFile()
+
         HOWL_HEALTH_MODIFIER = AttributeModifier(HOWL_HEALTH_UUID,
             "HowlHealthModifier", CrimeUtilsConfig.howlHealthAddition, AttributeModifier.Operation.ADDITION
         )
@@ -139,6 +158,21 @@ class CrimeUtils : ModInitializer {
             }
         }*/
 
+        PlayerBlockBreakEvents.BEFORE.register { level, player, pos, state, blockEntity ->
+            if (isProtectionEnabled) {
+                for (area in this.protectedAreas) {
+                    if (area.contains(Vec3.atCenterOf(pos))) {
+                        player.sendSystemMessage(Component.literal("That block is protected!"))
+                        return@register false
+                    }
+                }
+            }
+
+            true
+        }
+
+        registerCommands()
+
         ModRegistry.hatList.add(BEAF_HAT)
     }
 
@@ -163,6 +197,122 @@ class CrimeUtils : ModInitializer {
 
     fun applyHowlEffects(entity: Wolf) {
         entity.forceAddEffect(MobEffectInstance(MobEffects.REGENERATION, 1_000_000_000, 255, false, false), null)
+    }
+
+    private fun registerCommands() {
+        CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
+            dispatcher.register(
+                Commands.literal("areaprot")
+                    .requires { it.hasPermission(3) }
+                    .then(
+                        Commands.literal("toggle")
+                            .executes {
+                                isProtectionEnabled = !isProtectionEnabled
+                                it.source.sendSuccess(Component.literal("Toggled block protection area status to ${isProtectionEnabled}."), true)
+
+                                saveProtFile()
+
+                                1
+                            }
+                    )
+                    .then(
+                        Commands.literal("add")
+                            .then(
+                                Commands.argument("pos1", BlockPosArgument.blockPos())
+                                    .then(
+                                        Commands.argument("pos2", BlockPosArgument.blockPos())
+                                            .executes {
+                                                val pos1 = BlockPosArgument.getLoadedBlockPos(it, "pos1")
+                                                val pos2 = BlockPosArgument.getLoadedBlockPos(it, "pos2")
+
+                                                val area = AABB(pos1, pos2).inflate(0.5)
+
+                                                this.protectedAreas.add(area)
+                                                it.source.sendSuccess(Component.literal("Added protected area from [${area.minX}, ${area.minY}, ${area.minZ}] to [${area.maxX}, ${area.maxY}, ${area.maxZ}] under index ${this.protectedAreas.size - 1}."), true)
+
+                                                saveProtFile()
+
+                                                1
+                                            }
+                                    )
+                            )
+                    )
+                    .then(
+                        Commands.literal("remove")
+                            .then(
+                                Commands.argument("index", IntegerArgumentType.integer(0))
+                                    .executes {
+                                        val index = IntegerArgumentType.getInteger(it, "index")
+
+                                        if (this.protectedAreas.size >= index) {
+                                            it.source.sendFailure(Component.literal("Index is out of range of a max ${this.protectedAreas.size - 1}!"))
+                                            return@executes 0
+                                        }
+
+                                        val removed = this.protectedAreas.removeAt(index)
+                                        it.source.sendSuccess(Component.literal("Removed protected area from [${removed.minX}, ${removed.minY}, ${removed.minZ}] to [${removed.maxX}, ${removed.maxY}, ${removed.maxZ}]."), true)
+
+                                        1
+                                    }
+                            )
+                    )
+            )
+        }
+    }
+
+    private fun saveProtFile() {
+        if (!protFile.exists())
+            protFile.createNewFile()
+
+        val json = JsonObject()
+
+        json.addProperty("enabled", this.isProtectionEnabled)
+
+        val arr = JsonArray()
+        for (area in this.protectedAreas) {
+            val posList = JsonArray()
+            posList.add(JsonObject().apply {
+                this.addProperty("x", area.minX)
+                this.addProperty("y", area.minY)
+                this.addProperty("z", area.minZ)
+            })
+            posList.add(JsonObject().apply {
+                this.addProperty("x", area.maxX)
+                this.addProperty("y", area.maxY)
+                this.addProperty("z", area.maxZ)
+            })
+
+            arr.add(posList)
+        }
+
+        json.add("areas", arr)
+
+        protFile.writeText(CrimeUtilsConfig.gson.toJson(json))
+    }
+
+    private fun loadProtFile() {
+        if (!protFile.exists())
+            return
+
+        try {
+            val json = JsonParser.parseString(protFile.readText()).asJsonObject
+
+            this.isProtectionEnabled = json.get("enabled").asBoolean
+
+            json.getAsJsonArray("areas").forEach {
+                val area = it.asJsonArray
+
+                val pos1 = area.get(0).asJsonObject
+                val pos2 = area.get(1).asJsonObject
+
+                val boundingBox = AABB(pos1.get("x").asDouble, pos1.get("y").asDouble, pos1.get("z").asDouble, pos2.get("x").asDouble, pos2.get("y").asDouble, pos2.get("z").asDouble)
+
+                this.protectedAreas.add(boundingBox)
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to load protections file!")
+            e.printStackTrace()
+        }
     }
 
     companion object {
