@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings
 import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.ChatFormatting
 import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument
 import net.minecraft.core.BlockPos
@@ -162,7 +163,8 @@ class CrimeUtils : ModInitializer {
             if (isProtectionEnabled) {
                 for (area in this.protectedAreas) {
                     if (area.contains(Vec3.atCenterOf(pos))) {
-                        player.sendSystemMessage(Component.literal("That block is protected!"))
+                        player.sendSystemMessage(Component.literal("That block is protected!")
+                            .withStyle(ChatFormatting.RED))
                         return@register false
                     }
                 }
