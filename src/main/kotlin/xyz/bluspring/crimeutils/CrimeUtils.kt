@@ -246,7 +246,7 @@ class CrimeUtils : ModInitializer {
                                     .executes {
                                         val index = IntegerArgumentType.getInteger(it, "index")
 
-                                        if (this.protectedAreas.size >= index) {
+                                        if (index >= this.protectedAreas.size) {
                                             it.source.sendFailure(Component.literal("Index is out of range of a max ${this.protectedAreas.size - 1}!"))
                                             return@executes 0
                                         }
