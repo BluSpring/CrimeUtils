@@ -88,7 +88,7 @@ class CrimeUtils : ModInitializer {
         )
 
         BiomeModifications.addSpawn({
-            it.biome.mobSettings.getMobs(MobCategory.MONSTER).unwrap().any { a -> a.type == EntityType.ZOMBIE } || it.hasTag(BiomeTags.IS_NETHER)
+            it.biome.mobSettings.getMobs(MobCategory.MONSTER).unwrap().any { a -> a.type == EntityType.ZOMBIE } || it.hasTag(BiomeTags.IS_NETHER) || it.hasTag(BiomeTags.IS_END)
         }, CrimeUtilsConfig.ZOMBIE_CATEGORY, EntityType.ZOMBIE, CrimeUtilsConfig.spawnWeight, CrimeUtilsConfig.minZombieSpawns, CrimeUtilsConfig.maxZombieSpawns)
 
         // Increase animal spawn weights to force them to have a higher spawn priority
@@ -121,6 +121,20 @@ class CrimeUtils : ModInitializer {
             }) {
                 if (!isHowlMatchingVersion(entity))
                     applyHowlHealth(entity)
+
+                if (entity.y <= level.dimensionType().minY) {
+                    // Teleport Howl to safety
+                    val player = entity.owner?.run { if (this.isOnGround) this else null } ?: level.players().filter { it.isOnGround }.randomOrNull()
+
+                    if (player == null) {
+                        entity.fallDistance = 0f
+                        entity.isNoGravity = true
+                    } else {
+                        entity.fallDistance = 0f
+                        entity.teleportTo(player.x, player.y, player.z)
+                        entity.isNoGravity = false
+                    }
+                }
 
                 applyHowlEffects(entity)
             }
